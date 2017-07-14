@@ -4,6 +4,7 @@
 
 (require! (lit Probability-tree) "./probability-tree")
 
+
 (def-interface Model ((*root ((create Probability-tree)))
                       (*nodes []))
 
@@ -14,7 +15,38 @@
 
   (def each (f) (.each this.*root f) this)
 
-  (def given (seq)
+  (models (new Map))
+  (def-generic generate-random-phrase (n (m this))
+
+    (print "generating")
+    (var t (.random m))
+
+    (var gram (rest t.seq))
+    (var out [])
+    (do-times n
+
+      (print "t" t.seq t.likelyhood)
+      (print "gram" gram)
+      (assign t (.random (.given m gram)))
+      (assign gram (rest t.seq))
+      (.push out (last t.seq)))
+    (.join out " "))
+
+  (def *next-gram (m)
+    (=> (gram t)
+        (.add m gram)
+        [(dots (rest gram)) t]))
+  (def-generic train (n tokens (m this) *next-gram )
+    (macro array-of (n ...body)
+           `(scoped
+             (var r [])
+             (do-times @n (.push r (scoped ...@body)))
+             r))
+    (var gram (array-of n null))
+    (.push tokens (dots gram))
+    (.reduce tokens  (*next-gram m)))
+
+  (def-generic given (seq models)
     (if (> seq.length 0)
         (let ((*root (.find this.*root seq))
               (*nodes []))
@@ -27,7 +59,8 @@
                   (remember models *root
                             (pipe *nodes (.sort  (=> (a b) (- a.count b.count))))
                             ((create Model) ((create *root) null null *root.children) *nodes)))
-              (.given this seq)))
+              (throw (new Error "mis counting has occured"))
+              ))
         this)
 
     )
@@ -37,7 +70,7 @@
     (.sort this)
     (var t this.total)
 
-    (var r (Math.floor (* (Math.random) (- t 1)))
+    (var r (Math.floor (* (Math.random) t))
          c 0
          i 0)
 
@@ -61,15 +94,15 @@
 
   (def sort () (.sort this.*nodes (=> (a b) (- a.count b.count))))
 
-  (def forget (seq)
+  (def degrade (seq)
     ;; Broken, not sure why
     (var node (.find this.*root seq))
     (if (and (not (= null node))
              (defined? node)
              (> node.count 1))
-        (do-times node.depth
-          (-- node.count)
-          (assign node node.parent))))
+        (until (= node null)
+               (-- node.count)
+               (assign node node.parent))))
 
   (def add (seq )
     ;; (cond

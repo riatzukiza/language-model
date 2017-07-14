@@ -1,0 +1,20 @@
+(include "kit/header")
+(import-namespace kit)
+(require! (lit Model Probability-tree) "./index")
+
+(require! (lit create extend mixin cond ) "kit/js/util"
+          (lit Interface) "./lib/interface")
+
+(scoped
+ (var m ((create Model)))
+
+ (.train m 4 ['a 'a 'b 'b 'c 'd 'a' 'b 't 'g 'g 't 'a 'a 'g'r't'y'w'r'q'g'd'f'q'a'f'h'e'a])
+
+
+ (print "random string" (.generate-random-phrase m 50 ))
+
+ (var t (.random m))
+ (print t)
+ (print t.likelyhood)
+ (.degrade m (get  t 'seq))
+ (print t.likelyhood))

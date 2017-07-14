@@ -24,5 +24,9 @@
                  (incr-by r node.value.count))) 
   (gett likelyhood (/  this.count this.*model.total))
 
-  (sett count v (assign this.value.count v)))
+  (sett count v
+        (if this.value
+            (assign this.value.count v)
+            (assign this.value (lit (count v)))
+            )))
 (export Probability-tree)
