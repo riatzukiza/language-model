@@ -1,0 +1,88 @@
+(include "kit/header")
+(import-namespace kit)
+(namespace language-model)
+
+(require! (lit Probability-tree) "./probability-tree")
+
+(def-interface Model ((*root ((create Probability-tree)))
+                      (*nodes []))
+
+  (init (assign *root.*model this))
+
+
+  (gett total this.*root.count)
+
+  (def each (f) (.each this.*root f) this)
+
+  (def given (seq)
+    (if (> seq.length 0)
+        (let ((*root (.find this.*root seq))
+              (*nodes []))
+
+          (if *root
+              (do (each *root (node)
+                        (if (not (= node.value null))
+                            (.push *nodes node)))
+
+                  (remember models *root
+                            (pipe *nodes (.sort  (=> (a b) (- a.count b.count))))
+                            ((create Model) ((create *root) null null *root.children) *nodes)))
+              (.given this seq)))
+        this)
+
+    )
+
+  (def random ()
+
+    (.sort this)
+    (var t this.total)
+
+    (var r (Math.floor (* (Math.random) (- t 1)))
+         c 0
+         i 0)
+
+
+    (var node (get this.*nodes i))
+
+    (incr-by c node.count)
+
+    (until (>= c r)
+
+           (++ i)
+           (assign node (get this.*nodes i))
+           (incr-by c node.count)) node)
+
+
+  (def likelyhood (seq)
+    (var node (.find this.*root seq))
+    (/ node.count
+       this.total ))
+  (def save (fs path ))
+
+  (def sort () (.sort this.*nodes (=> (a b) (- a.count b.count))))
+
+  (def forget (seq)
+    ;; Broken, not sure why
+    (var node (.find this.*root seq))
+    (if (and (not (= null node))
+             (defined? node)
+             (> node.count 1))
+        (do-times node.depth
+          (-- node.count)
+          (assign node node.parent))))
+
+  (def add (seq )
+    ;; (cond
+    ;;   (#-> (get 'value))
+    ;;   (#-> (get 'count))
+    ;;   (#-> (set 'value (lit seq (count 1)))
+    ;;          )
+    ;;   node)
+    (var  node (.insert this.*root seq ))
+    (if node.value
+        (assign node.value.count (+ node.count 1))
+        (do (assign node.value (lit seq (count 1)))
+            (.push  this.*nodes node)))
+    node))
+
+(export Model)
