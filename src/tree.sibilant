@@ -59,7 +59,7 @@
         (each *children (node k)
               (if (leaf? node)
                   (f node k)
-                  (.each node f false leaf *children))))))
+                  (.each node f false leaf? this.*children))))))
 (export Tree)
 
 (def-interface Tree-map (value parent (*children (new Map)))

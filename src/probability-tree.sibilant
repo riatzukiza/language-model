@@ -13,6 +13,10 @@
   (extend Tree-map)
 
   (gett seq  this.value.seq)
+  (gett token
+        (var ki (- this.depth 1))
+        (if (> ki 0)
+            (get this.value.seq ki)))
   (gett count
 
         (var self this)
@@ -21,12 +25,20 @@
                  (collect r 0)
                  (each self (node))
                  (if node.value )
-                 (incr-by r node.value.count))) 
+                 (incr-by r node.value.count)))
   (gett likelyhood (/  this.count this.*model.total))
 
   (sett count v
         (if this.value
             (assign this.value.count v)
-            (assign this.value (lit (count v)))
-            )))
+            (assign this.value (lit (count v)))))
+  (def trace-from (seq)
+    (var node (.insert this seq))
+    (if (and (not (= null node))
+             (defined? node))
+
+        (until (= node null)
+               (f node seq)
+               (assign node node.parent)
+               (assign seq (rest seq))))))
 (export Probability-tree)

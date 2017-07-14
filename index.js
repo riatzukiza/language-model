@@ -51,6 +51,12 @@ var {
   cond,
   partiallyApplyAfter
  } = require("kit/js/util");
+Map.prototype.each = (function Map$prototype$each$(f) {
+  /* Map.prototype.each index.sibilant:3:0 */
+
+  this.forEach(f);
+  return this;
+});
 var { 
   create,
   extend,
@@ -68,10 +74,12 @@ mixin({
   Interface
  }, global);
 var { 
-  Model
+  Model,
+  Storage
  } = require("./lib/model"),
     { 
   ProbabilityTree
  } = require("./lib/probability-tree");
+exports.Storage = Storage;
 exports.Model = Model;
 exports.ProbabilityTree = ProbabilityTree;

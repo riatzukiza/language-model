@@ -1,9 +1,45 @@
 (include "kit/header")
 (import-namespace kit)
 (namespace language-model)
+(macro array-of (n ...body)
+       `(scoped
+         (var r [])
+         (do-times @n (.push r (scoped ...@body)))
+         r))
 
 (require! (lit Probability-tree) "./probability-tree")
 
+
+
+(macro fget (...body)
+       `(fpipe (get ...@body)))
+
+(require! (lit File-system) "./file-system")
+
+(require! Path 'path)
+(def-interface Storage ()
+  (fs ((create File-system) "."))
+  (def-generic save (p m fs)
+    (pipe (.insert fs p)
+          (then-do
+           (let ((sequences (.map m.*nodes (fget 'seq)))
+                 (counts (.map m.*nodes (fget 'count))))
+             (Promise.all [(.set fs (.join Path p "counts.json") (JSON.stringify counts))
+                           (.set  fs (.join Path p "sequences.json") (JSON.stringify sequences))])))))
+
+  (def-generic load (p fs)
+    (var m ((create Model)))
+    (async-let ((counts (pipe (.find fs (Path.join p "counts.json"))
+                              (.then  (fget 'string))
+                              (.then JSON.parse)))
+
+                (sequences (pipe (.find fs (Path.join p "sequences.json"))
+                                 (.then  (fget 'string))
+                                 (.then JSON.parse))))
+
+
+      (.reduce sequences (=> (m s i) (.add m s (get counts i)) m) m))))
+(export Storage)
 
 (def-interface Model ((*root ((create Probability-tree)))
                       (*nodes []))
@@ -16,35 +52,50 @@
   (def each (f) (.each this.*root f) this)
 
   (models (new Map))
-  (def-generic generate-random-phrase (n (m this))
 
-    (print "generating")
+  (def-generic save (path (m this))
+    (.save Model-storage path m))
+
+  (def-generic load (path)
+    (.load Model-storage path))
+  (def-generic random-walk (n f (m this))
+
     (var t (.random m))
 
     (var gram (rest t.seq))
     (var out [])
-    (do-times n
 
-      (print "t" t.seq t.likelyhood)
-      (print "gram" gram)
+    (do-times n
+      (assign t (.random (.given m (f gram))))
+      (assign gram (rest t.seq))
+      (.push out (last t.seq)))
+    out)
+  (def-generic random-sequence (n (m this))
+
+    (var t (.random m))
+
+    (var gram (rest t.seq))
+    (var out [])
+
+    (do-times n
       (assign t (.random (.given m gram)))
       (assign gram (rest t.seq))
       (.push out (last t.seq)))
-    (.join out " "))
+    out)
+
+  (def-generic generate-random-phrase (n (m this))
+    (.join (.random-sequence m n) " "))
 
   (def *next-gram (m)
     (=> (gram t)
         (.add m gram)
         [(dots (rest gram)) t]))
+
   (def-generic train (n tokens (m this) *next-gram )
-    (macro array-of (n ...body)
-           `(scoped
-             (var r [])
-             (do-times @n (.push r (scoped ...@body)))
-             r))
+
     (var gram (array-of n null))
     (.push tokens (dots gram))
-    (.reduce tokens  (*next-gram m)))
+    (.reduce tokens  (*next-gram m) gram))
 
   (def-generic given (seq models)
     (if (> seq.length 0)
@@ -79,10 +130,12 @@
 
     (incr-by c node.count)
 
-    (until (>= c r)
+    (until (> c r)
+
 
            (++ i)
            (assign node (get this.*nodes i))
+
            (incr-by c node.count)) node)
 
 
@@ -94,8 +147,13 @@
 
   (def sort () (.sort this.*nodes (=> (a b) (- a.count b.count))))
 
+  (def-generic add-count (seq n)
+    (.trace-from this.*root seq (#-> (get 'count ) (incr-by n))))
+
+  (def-generic sub-count (seq n)
+    (.trace-from this.*root seq (#-> (get 'count ) (decr-by n))))
+
   (def degrade (seq)
-    ;; Broken, not sure why
     (var node (.find this.*root seq))
     (if (and (not (= null node))
              (defined? node)
@@ -104,7 +162,7 @@
                (-- node.count)
                (assign node node.parent))))
 
-  (def add (seq )
+  (def-generic add (seq (t 1))
     ;; (cond
     ;;   (#-> (get 'value))
     ;;   (#-> (get 'count))
@@ -113,9 +171,16 @@
     ;;   node)
     (var  node (.insert this.*root seq ))
     (if node.value
-        (assign node.value.count (+ node.count 1))
-        (do (assign node.value (lit seq (count 1)))
+        (assign node.value.count (+ node.count t))
+        (do (assign node.value (lit seq (count t)))
             (.push  this.*nodes node)))
+
+    ;; (.trace-from this.*root
+    ;;              (=> (node ks)
+    ;;                  (if node.value
+    ;;                      (assign node.value.count (+ node.count t))
+    ;;                      (do (assign node.value (lit (seq ks) (count t)))
+    ;;                          (.push  this.*nodes node)))))
     node))
 
 (export Model)
