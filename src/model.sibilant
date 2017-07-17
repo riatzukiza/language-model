@@ -41,13 +41,18 @@
       (.reduce sequences (=> (m s i) (.add m s (get counts i)) m) m))))
 (export Storage)
 
-(def-interface Model ((*root ((create Probability-tree)))
+(def summate (arr f)
+  (.reduce arr (=> (a b i) (+ a (f b i))) 0))
+
+(def-interface Model ((*root ((create this.Graph)))
                       (*nodes []))
+
+  (Graph Probability-tree)
 
   (init (assign *root.*model this))
 
 
-  (gett total this.*root.count)
+  (gett total (summate this.*nodes (fget 'count)))
 
   (def each (f) (.each this.*root f) this)
 
@@ -58,6 +63,7 @@
 
   (def-generic load (path)
     (.load Model-storage path))
+
   (def-generic random-walk (n f (m this))
 
     (var t (.random m))
@@ -110,11 +116,8 @@
                   (remember models *root
                             (pipe *nodes (.sort  (=> (a b) (- a.count b.count))))
                             ((create Model) ((create *root) null null *root.children) *nodes)))
-              (throw (new Error "mis counting has occured"))
-              ))
-        this)
 
-    )
+              (throw (new Error "miscounting has occured")))) this))
 
   (def random ()
 
@@ -138,14 +141,15 @@
 
            (incr-by c node.count)) node)
 
-
   (def likelyhood (seq)
     (var node (.find this.*root seq))
     (/ node.count
        this.total ))
+
   (def save (fs path ))
 
-  (def sort () (.sort this.*nodes (=> (a b) (- a.count b.count))))
+  (def sort ()
+    (.sort this.*nodes (=> (a b) (- a.count b.count))))
 
   (def-generic add-count (seq n)
     (.trace-from this.*root seq (#-> (get 'count ) (incr-by n))))
@@ -163,24 +167,7 @@
                (assign node node.parent))))
 
   (def-generic add (seq (t 1))
-    ;; (cond
-    ;;   (#-> (get 'value))
-    ;;   (#-> (get 'count))
-    ;;   (#-> (set 'value (lit seq (count 1)))
-    ;;          )
-    ;;   node)
-    (var  node (.insert this.*root seq ))
-    (if node.value
-        (assign node.value.count (+ node.count t))
-        (do (assign node.value (lit seq (count t)))
-            (.push  this.*nodes node)))
-
-    ;; (.trace-from this.*root
-    ;;              (=> (node ks)
-    ;;                  (if node.value
-    ;;                      (assign node.value.count (+ node.count t))
-    ;;                      (do (assign node.value (lit (seq ks) (count t)))
-    ;;                          (.push  this.*nodes node)))))
+    (.insert this.*root seq)
     node))
 
 (export Model)

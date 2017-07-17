@@ -12,26 +12,20 @@
 
   (extend Tree-map)
 
-  (gett seq  this.value.seq)
-  (gett token
-        (var ki (- this.depth 1))
-        (if (> ki 0)
-            (get this.value.seq ki)))
-  (gett count
+  (gett token this.name)
+  (def *insert (seq t)
 
-        (var self this)
+    (if (empty? seq)
+        tree
 
-        (compose (ternary this.value this.value.count)
-                 (collect r 0)
-                 (each self (node))
-                 (if node.value )
-                 (incr-by r node.value.count)))
+        (.insert (.*insert this seq ) (rest seq))))
+
+  (def insert (seq t)
+    (.call Tree-map.insert this seq)
+    (.*insert this seq t))
+
   (gett likelyhood (/  this.count this.*model.total))
 
-  (sett count v
-        (if this.value
-            (assign this.value.count v)
-            (assign this.value (lit (count v)))))
   (def trace-from (seq)
     (var node (.insert this seq))
     (if (and (not (= null node))
