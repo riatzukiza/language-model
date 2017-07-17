@@ -83,3 +83,22 @@ var {
 exports.Storage = Storage;
 exports.Model = Model;
 exports.ProbabilityTree = ProbabilityTree;
+
+
+// var models = {
+//     emotion,
+//     topics,
+//     user,
+//     channel
+// }
+// var Duckling = {
+//     models,
+//     train() {},
+//     talk() {},
+//     save() {},
+//     load() {},
+//     listen(){},
+//     close(){},
+
+
+// }

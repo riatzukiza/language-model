@@ -146,17 +146,19 @@ var parsed = (function() {
   m.train(2, [ "a", "a", "b", "b", "c", "d", "a", "b", "t", "g", "g", "t", "a", "a", "g", "r", "t", "y", "w", "r", "q", "g", "d", "f", "q", "a", "f", "h", "e", "a" ]);
   m.train(2, [ "a", "a", "b", "b", "c", "d", "a", "b", "t", "g", "g", "t", "a", "a", "g", "r", "t", "y", "w", "r", "q", "g", "d", "f", "q", "a", "f", "h", "e", "a" ]);
   m.train(2, [ "d", "f", "g", "h", "r", "w", "g", "h", "j", "q", "w", "f", "a", "g", "a", "g", "r", "t", "y", "h", "s", "f", "s", "q", "w", "e", "r", "q", "w", "er", "we", "q", "t", "s", "f", "q", "f", "a", "f", "a", "g", "h", "w", "e", "d", "f", "g", "w", "f", "w", "d", "a", "q", "w", "e", "r", "tq", "w", "e", "r", "t", "q", "t" ]);
-  console.log(m._nodes);
   console.log("random string", m.generateRandomPhrase(50));
   var t = m.random(),
       _t = m.random();
-  console.log(t);
   console.log("a random node t", t.seq);
   console.log("a random node *t", _t.seq);
+  console.log("count of t", t.count);
+  console.log("count of *t", _t.count);
   console.log("likelyhood of t", t.likelyhood);
   console.log("likelyhood of *t", _t.likelyhood);
   console.log("degrading value of t for m");
   m.degrade(t.seq);
+  console.log("count of t", t.count);
+  console.log("count of *t", _t.count);
   console.log("likelyhood of t", t.likelyhood);
   console.log("likelyhood of *t", _t.likelyhood);
   console.log(t.likelyhood);
@@ -179,15 +181,20 @@ var parsed = (function() {
     console.log("random string", m.generateRandomPhrase(50));
     var t = m.random(),
         _t = m.random();
-    console.log(t);
     console.log("a random node t", t.seq);
     console.log("a random node *t", _t.seq);
     console.log("likelyhood of t", t.likelyhood);
     console.log("likelyhood of *t", _t.likelyhood);
+    console.log("count of t", t.count);
+    console.log("count of *t", _t.count);
+    console.log("total in m", m.total);
     console.log("degrading value of t for m");
     m.degrade(t.seq);
     console.log("likelyhood of t", t.likelyhood);
     console.log("likelyhood of *t", _t.likelyhood);
+    console.log("count of t", t.count);
+    console.log("count of *t", _t.count);
+    console.log("total in m", m.total);
     return console.log(t.likelyhood);
   
   });
